@@ -22,8 +22,14 @@
                     (cat
                         n1
                         (enc
+                            (mpdu_header
+                                unit_number
+                                reg_role_number
+                                reg_ref_number
+                            )
                             n1
                             "known_string"
+                            announce_registrar
                             (privk app)
                         )
                     )
@@ -49,8 +55,14 @@
                     (cat
                         n2
                         (enc
+                            (mpdu_header
+                                unit_number
+                                conf_role_number
+                                conf_ref_number
+                            )
                             n2
                             "known_string"
+                            registrar_noted
                             (privk cont)
                         )
                     )
@@ -68,8 +80,14 @@
                     (cat
                         n3
                         (enc
+                            (mpdu_header
+                                unit_number
+                                conf_role_number
+                                conf_ref_number
+                            )
                             n3
                             "known_string"
+                            cell_spec_body
                             (privk cont)
                         )
                     )
@@ -104,6 +122,11 @@
                     (cat
                         n0
                         (enc
+                            (mpdu_header
+                                unit_number
+                                foreign_role_numbers
+                                foreign_ref_numbers
+                            )
                             n0
                             "known_string"
                             (privk app1)
@@ -122,8 +145,14 @@
                     (cat
                         n1
                         (enc
+                            (mpdu_header
+                                unit_number
+                                reg_role_number
+                                reg_ref_number
+                            )
                             n1
                             "known_string"
+                            announce_registrar
                             (privk app)
                         )
                     )
@@ -146,8 +175,14 @@
                     (cat
                         n2
                         (enc
+                            (mpdu_header
+                                unit_number
+                                conf_role_number
+                                conf_ref_number
+                            )
                             n2
                             "known_string"
+                            registrar_noted
                             (privk cont)
                         )
                     )
@@ -170,8 +205,14 @@
                     (cat
                         n3
                         (enc
+                            (mpdu_header
+                                unit_number
+                                conf_role_number
+                                conf_ref_number
+                            )
                             n3
                             "known_string"
+                            cell_spec_body
                             (privk cont)
                         )
                     )
@@ -189,8 +230,14 @@
                     (cat
                         n4
                         (enc
+                            (mpdu_header
+                                unit_number
+                                conf_role_number
+                                conf_ref_number
+                            )
                             n4
                             "known_string"
+                            cell_spec_body
                             (privk cont)
                         )
                     )
@@ -218,6 +265,11 @@
                     (cat
                         n0
                         (enc
+                            (mpdu_header
+                                unit_number
+                                foreign_role_numbers
+                                foreign_ref_numbers
+                            )
                             n0
                             "known_string"
                             (privk app1)
@@ -236,8 +288,14 @@
                     (cat
                         n4
                         (enc
+                            (mpdu_header
+                                unit_number
+                                conf_role_number
+                                conf_ref_number
+                            )
                             n4
                             "known_string"
+                            cell_spec_body
                             (privk cont)
                         )
                     )
