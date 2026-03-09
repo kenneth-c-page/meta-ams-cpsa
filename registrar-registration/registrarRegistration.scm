@@ -323,7 +323,7 @@
         (n3 text) (cell_spec_body mesg)
         (n4 text) (foreign_reg_mib locn)
     )
-    (defstrandmax new_registrar
+    (defstrand new_registrar 4
         (unit_number unit_number) (reg_role_number reg_role_number) (reg_ref_number reg_ref_number) ; header
         (n1 n1) (app app) (announce_registrar announce_registrar)                                   ; signature and payload
         (reg_mib reg_mib)
@@ -343,7 +343,7 @@
         (n3 text) (cell_spec_body mesg)
         (n4 text) (foreign_reg_mib locn)
     )
-    (defstrandmax config_server
+    (defstrand config_server 7
         (n0 n0) (app1 app1)
         (foreign_role_numbers foreign_role_numbers) (foreign_ref_numbers foreign_ref_numbers)
         (unit_number unit_number) (reg_role_number reg_role_number) (reg_ref_number reg_ref_number) ; header
@@ -369,7 +369,7 @@
         (n3 text) (cell_spec_body mesg)
         (n4 text) (foreign_reg_mib locn)
     )
-    (defstrandmax foreign_registrars
+    (defstrand foreign_registrars 3
         (n0 n0) (app1 app1)
         (foreign_role_numbers foreign_role_numbers) (foreign_ref_numbers foreign_ref_numbers)
         (unit_number unit_number) (conf_role_number conf_role_number) (conf_ref_number conf_ref_number) (cont cont) (foreign_reg_mib foreign_reg_mib)
