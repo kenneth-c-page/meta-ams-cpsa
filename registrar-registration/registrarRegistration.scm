@@ -1,5 +1,80 @@
 (herald "Meta-AMS (MAMS) Registrar Registration")
 
+(defmacro (announce_registrar_mpdu)
+    (cat
+        ; mpdu header, per 5.1.1
+        (mpdu_header
+            unit_number
+            reg_role_number
+            reg_ref_number
+        )
+        ; mpdu digital signature, per 5.1.4
+        ; app private key used to sign, per 5.1.4.3
+        (cat
+            n1
+            (enc
+                n1
+                "known_string"
+                (privk app)
+            )
+        )
+        announce_registrar
+    )
+)
+(defmacro (registrar_noted_mpdu)
+    (cat
+        (mpdu_header
+            unit_number
+            conf_role_number
+            conf_ref_number
+        )
+        (cat
+            n2
+            (enc
+                n2
+                "known_string"
+                (privk cont)
+            )
+        )
+        registrar_noted
+    )
+)
+(defmacro (cell_spec_mpdu n)
+    (cat
+        (mpdu_header
+            unit_number
+            conf_role_number
+            conf_ref_number
+        )
+        (cat
+            n
+            (enc
+                n
+                "known_string"
+                (privk cont)
+            )
+        )
+        cell_spec_body
+    )
+)
+(defmacro (heartbeat_mpdu unit_number role_number ref_number n k)
+    (cat
+        (mpdu_header
+            unit_number
+            role_number
+            ref_number
+        )
+        (cat
+            n
+            (enc
+                n
+                "known_string"
+                (privk k)
+            )
+        )
+    )
+)
+
 (defprotocol mams_registrar_reg basic
     (defrole new_registrar
         (vars
@@ -8,75 +83,9 @@
             (n3 text) (cell_spec_body mesg)
         )
         (trace
-            ; announce_registrar
-            (send
-                (cat
-                    ; mpdu header, per 5.1.1
-                    (mpdu_header
-                        unit_number
-                        reg_role_number
-                        reg_ref_number
-                    )
-                    ; mpdu digital signature, per 5.1.4
-                    ; app private key used to sign, per 5.1.4.3
-                    (cat
-                        n1
-                        (enc
-                            n1
-                            "known_string"
-                            (privk app)
-                        )
-                    )
-                    ; per 5.1.5.x, supplementary data includes:
-                    ; endpoint name (useful since this will be stored and loaded), cell descriptor, module list
-                    ; assigned module number, delivery point name, delivery vector, delivery vector list,
-                    ; contact summary, subscription assertion structure, invitation assertion structure,
-                    ; subscription list, invitation list, declaration structure, module status structure,
-                    ; module status list, subscription cancellation structure, invitation cancellation structure,
-                    ; reconnect structure, and refusal reason
-                    ; HOWEVER, only some of these are relevant to the registrar's announce_registrar MPDU
-                    announce_registrar
-                )
-            )
-            ; registrar_noted
-            (recv
-                (cat
-                    (mpdu_header
-                        unit_number
-                        conf_role_number
-                        conf_ref_number
-                    )
-                    (cat
-                        n2
-                        (enc
-                            n2
-                            "known_string"
-                            (privk cont)
-                        )
-                    )
-                    registrar_noted
-                )
-            )
-            ; cell_spec
-            (recv
-                (cat
-                    (mpdu_header
-                        unit_number
-                        conf_role_number
-                        conf_ref_number
-                    )
-                    (cat
-                        n3
-                        (enc
-                            n3
-                            "known_string"
-                            (privk cont)
-                        )
-                    )
-                    cell_spec_body
-                )
-            )
-            ; store cell_spec
+            (send (announce_registrar_mpdu))
+            (recv (registrar_noted_mpdu))
+            (recv (cell_spec_mpdu n3))
             (stor
                 reg_mib
                 cell_spec_body
@@ -95,108 +104,26 @@
         (trace
             ; foreign_registrars heartbeat
             (recv
-                (cat
-                    (mpdu_header
-                        unit_number
-                        foreign_role_numbers
-                        foreign_ref_numbers
-                    )
-                    (cat
-                        n0
-                        (enc
-                            n0
-                            "known_string"
-                            (privk app1)
-                        )
-                    )
+                (heartbeat_mpdu
+                    unit_number
+                    foreign_role_numbers
+                    foreign_ref_numbers
+                    n0
+                    app1
                 )
             )
-            ; announce_registrar
-            (recv
-                (cat
-                    (mpdu_header
-                        unit_number
-                        reg_role_number
-                        reg_ref_number
-                    )
-                    (cat
-                        n1
-                        (enc
-                            n1
-                            "known_string"
-                            (privk app)
-                        )
-                    )
-                    announce_registrar
-                )
-            )
-            ; store supplementary data (registrar location) in mib
+            (recv (announce_registrar_mpdu))
             (stor
                 conf_mib
                 announce_registrar
             )
-            ; registrar_noted
-            (send
-                (cat
-                    (mpdu_header
-                        unit_number
-                        conf_role_number
-                        conf_ref_number
-                    )
-                    (cat
-                        n2
-                        (enc
-                            n2
-                            "known_string"
-                            (privk cont)
-                        )
-                    )
-                    registrar_noted
-                )
-            )
-            ; load cell_spec_body
+            (send (registrar_noted_mpdu))
             (load
                 conf_mib
                 cell_spec_body
             )
-            ; cell_spec
-            (send
-                (cat
-                    (mpdu_header
-                        unit_number
-                        conf_role_number
-                        conf_ref_number
-                    )
-                    (cat
-                        n3
-                        (enc
-                            n3
-                            "known_string"
-                            (privk cont)
-                        )
-                    )
-                    cell_spec_body
-                )
-            )
-            ; cell_spec to foreign_registrars
-            (send
-                (cat
-                    (mpdu_header
-                        unit_number
-                        conf_role_number
-                        conf_ref_number
-                    )
-                    (cat
-                        n4
-                        (enc
-                            n4
-                            "known_string"
-                            (privk cont)
-                        )
-                    )
-                    cell_spec_body
-                )
-            )
+            (send (cell_spec_mpdu n3))
+            (send (cell_spec_mpdu n4))
         )
     )
     (defrole foreign_registrars
@@ -209,42 +136,16 @@
         (trace
             ; heartbeat
             (send
-                (cat
-                    (mpdu_header
-                        unit_number
-                        foreign_role_numbers
-                        foreign_ref_numbers
-                    )
-                    (cat
-                        n0
-                        (enc
-                            n0
-                            "known_string"
-                            (privk app1)
-                        )
-                    )
+                (heartbeat_mpdu
+                    unit_number
+                    foreign_role_numbers
+                    foreign_ref_numbers
+                    n0
+                    app1
                 )
             )
             ; cell_spec
-            (recv
-                (cat
-                    (mpdu_header
-                        unit_number
-                        conf_role_number
-                        conf_ref_number
-                    )
-                    (cat
-                        n4
-                        (enc
-                            n4
-                            "known_string"
-                            (privk cont)
-                        )
-                    )
-                    cell_spec_body
-                )
-            )
-            ; store cell_spec
+            (recv (cell_spec_mpdu n4))
             (stor
                 foreign_reg_mib
                 cell_spec_body
