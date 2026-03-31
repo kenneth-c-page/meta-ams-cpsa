@@ -149,6 +149,28 @@
     )
 )
 
+(defmacro (heartbeat_mpdu venture unit role ref_heartbeat_source n key_name)
+    (cat
+        ; header
+        (mpdu_header
+            venture
+            unit
+            role
+            ref_heartbeat_source
+        )
+        ; digital signature
+        (cat
+            n
+            (enc
+                n
+                "known_string"
+                (privk key_name)
+            )
+        )
+        ; supplementary data
+    )
+)
+
 (defprotocol mams_registrar_reg basic
     (defrole new_registrar
         (vars
@@ -190,8 +212,8 @@
             )
             (send (registrar_noted_mpdu))
             (load conf_mib 
-                foreign_unit 
                 foreign_endpoint_name
+                foreign_unit 
             )
             (send (cell_spec_mpdu 
                         ar_ref 
@@ -201,18 +223,93 @@
                   )
             )
         )
+        (gen-st foreign_unit foreign_endpoint_name)
     )
 
     (defrole config_server_forward
-    ; stor foreign as pre-established
-    ; heartbeats
-    ; 
-    )
-
-    (defrole config_server_reject
+        (vars
+            (conf_mib locn) (foreign_unit foreign_endpoint_name name)
+            (hb_nonce1 text) (foreign_venture foreign_unit reg_conf_role name)
+            (hb_nonce2 text) (config cont name)
+            (unit reg_endpoint_name name)
+            (cs_nonce2 ar_ref text)
+        )
+        (trace
+            (stor
+                conf_mib
+                foreign_endpoint_name
+                foreign_unit
+            )
+            (recv
+                (heartbeat_mpdu
+                    foreign_venture
+                    foreign_unit
+                    reg_conf_role
+                    reg_conf_role
+                    hb_nonce1
+                    foreign_venture
+                )
+            )
+            (send
+                (heartbeat_mpdu
+                    config
+                    config
+                    reg_conf_role
+                    reg_conf_role ; the reference number for a non-module entity is 0, the same as the role number
+                    hb_nonce2
+                    cont
+                )
+            )
+            (load
+                conf_mib
+                reg_endpoint_name
+                unit
+            )
+            (send
+                (cell_spec_mpdu
+                    ar_ref
+                    unit
+                    reg_endpoint_name
+                    cs_nonce2
+                )
+            )
+        )
+        (gen-st unit reg_endpoint_name)
     )
 
     (defrole foreign_registrars
+        (vars
+            (hb_nonce1 text) (foreign_venture foreign_unit reg_conf_role name)
+            (hb_nonce2 text) (config cont name)
+            (foreign_mib locn) (reg_endpoint_name unit name)
+        )
+        (trace
+            (send
+                (heartbeat_mpdu
+                    foreign_venture
+                    foreign_unit
+                    reg_conf_role
+                    reg_conf_role
+                    hb_nonce1
+                    foreign_venture
+                )
+            )
+            (recv
+                (heartbeat_mpdu
+                    config
+                    config
+                    reg_conf_role
+                    reg_conf_role
+                    hb_nonce2
+                    cont
+                )
+            )
+            (stor
+                foreign_mib
+                reg_endpoint_name
+                unit
+            )
+        )
     )
 
     (lang
