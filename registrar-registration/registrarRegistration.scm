@@ -179,18 +179,22 @@
             (foreign_endpoint_name foreign_unit name) (cs_nonce1 text)
         )
         (trace
-            (send (announce_registrar_mpdu))
-            (recv (registrar_noted_mpdu))
-            (recv (cell_spec_mpdu 
-                        ar_ref 
-                        foreign_unit 
-                        foreign_endpoint_name 
-                        cs_nonce1
-                  )
+            (send 
+                (announce_registrar_mpdu)
             )
-            (store reg_mib
-                foreign_endpoint_name
-                foreign_unit
+            (recv 
+                (registrar_noted_mpdu)
+            )
+            (recv 
+                (cell_spec_mpdu 
+                    ar_ref 
+                    (cell_spec_payload foreign_unit foreign_endpoint_name)
+                    cs_nonce1
+                )
+            )
+            (store 
+                reg_mib
+                (cell_spec_payload foreign_unit foreign_endpoint_name)
             )
         )
     )
@@ -204,26 +208,29 @@
             (cs_nonce1 text)
         )
         (trace
-            (recv (announce_registrar_mpdu))
-            (stor
-                conf_mib
-                reg_endpoint_name
-                unit
+            (recv 
+                (announce_registrar_mpdu)
             )
-            (send (registrar_noted_mpdu))
+            (stor 
+                conf_mib
+                (cell_spec_payload unit reg_endpoint_name)
+            )
+            (send 
+                (registrar_noted_mpdu)
+            )
             (load conf_mib 
                 foreign_endpoint_name
                 foreign_unit 
             )
-            (send (cell_spec_mpdu 
-                        ar_ref 
-                        foreign_unit 
-                        foreign_endpoint_name 
-                        cs_nonce1
-                  )
+            (send 
+                (cell_spec_mpdu 
+                    ar_ref 
+                    (cell_spec_payload foreign_unit foreign_endpoint_name)
+                    cs_nonce1
+                )
             )
         )
-        (gen-st foreign_unit foreign_endpoint_name)
+        (gen-st (cell_spec_payload foreign_unit foreign_endpoint_name))
     )
 
     (defrole config_server_forward
@@ -235,10 +242,9 @@
             (cs_nonce2 ar_ref text)
         )
         (trace
-            (stor
+            (stor ; this information is either preloaded, sent, etc., up to implementation
                 conf_mib
-                foreign_endpoint_name
-                foreign_unit
+                (cell_spec_payload foreign_unit foreign_endpoint_name)
             )
             (recv
                 (heartbeat_mpdu
@@ -260,27 +266,25 @@
                     cont
                 )
             )
-            (load
-                conf_mib
-                reg_endpoint_name
-                unit
+            (load conf_mib
+                (cell_spec_payload unit reg_endpoint_name)
             )
             (send
                 (cell_spec_mpdu
                     ar_ref
-                    unit
-                    reg_endpoint_name
+                    (cell_spec_payload unit reg_endpoint_name)
                     cs_nonce2
                 )
             )
         )
-        (gen-st unit reg_endpoint_name)
+        (gen-st (cell_spec_payload unit reg_endpoint_name))
     )
 
     (defrole foreign_registrars
         (vars
             (hb_nonce1 text) (foreign_venture foreign_unit reg_conf_role name)
             (hb_nonce2 text) (config cont name)
+            (cs_nonce2 ar_ref text)
             (foreign_mib locn) (reg_endpoint_name unit name)
         )
         (trace
@@ -304,10 +308,15 @@
                     cont
                 )
             )
-            (stor
-                foreign_mib
-                reg_endpoint_name
-                unit
+            (recv
+                (cell_spec_mpdu
+                    ar_ref
+                    (cell_spec_payload unit reg_endpoint_name)
+                    cs_nonce2
+                )
+            )
+            (stor foreign_mib
+                (cell_spec_payload unit reg_endpoint_name)
             )
         )
     )
@@ -318,5 +327,6 @@
         ; unit number (name)
         ; role number (name)
         ; reference number (per strand)
+        (cell_spec_payload (tuple 2))
     )
 )
