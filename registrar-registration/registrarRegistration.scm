@@ -6,7 +6,7 @@
         (mpdu_header
             venture
             unit
-            reg_conf_role
+            "0"
             ar_ref
         )
         ; digital signature
@@ -27,9 +27,9 @@
     (cat
         ; header
         (mpdu_header
-            config
-            config
-            reg_conf_role
+            "0"
+            "0"
+            "0"
             ar_ref
         )
         ; digital signature
@@ -49,9 +49,9 @@
     (cat
         ; header
         (mpdu_header
-            config
-            config
-            reg_conf_role
+            "0"
+            "0"
+            "0"
             echo
         )
         ; digital signature
@@ -93,8 +93,8 @@
 (defprotocol mams_registrar_reg basic
     (defrole new_registrar
         (vars
-            (ar_nonce text) (reg_endpoint_name venture unit reg_conf_role name) (ar_ref text)
-            (rn_nonce text) (config cont name)
+            (ar_nonce text) (reg_endpoint_name venture unit name) (ar_ref text)
+            (rn_nonce text) (cont name)
             (foreign_endpoint_name foreign_unit name) (cs_nonce1 text) (reg_mib locn)
         )
         (trace
@@ -120,9 +120,9 @@
 
     (defrole config_server_accept
         (vars
-            (ar_nonce text) (reg_endpoint_name venture unit reg_conf_role name) (ar_ref text)
+            (ar_nonce text) (reg_endpoint_name venture unit name) (ar_ref text)
             (conf_mib locn)
-            (rn_nonce text) (config cont name)
+            (rn_nonce text) (cont name)
             (foreign_endpoint_name foreign_unit name)
             (cs_nonce1 text)
         )
@@ -154,8 +154,8 @@
     (defrole config_server_forward
         (vars
             (conf_mib locn) (foreign_unit foreign_endpoint_name name)
-            (hb_nonce1 text) (foreign_venture reg_conf_role name)
-            (hb_nonce2 text) (config cont name)
+            (hb_nonce1 text) (foreign_venture name)
+            (hb_nonce2 text) (cont name)
             (unit reg_endpoint_name name)
             (cs_nonce2 ar_ref text)
         )
@@ -168,18 +168,18 @@
                 (heartbeat_mpdu
                     foreign_venture
                     foreign_unit
-                    reg_conf_role
-                    reg_conf_role
+                    "0"
+                    "0"
                     hb_nonce1
                     foreign_venture
                 )
             )
             (send
                 (heartbeat_mpdu
-                    config
-                    config
-                    reg_conf_role
-                    reg_conf_role ; the reference number for a non-module entity is 0, the same as the role number
+                    "0"
+                    "0"
+                    "0"
+                    "0" ; the reference number for a non-module entity is 0, the same as the role number
                     hb_nonce2
                     cont
                 )
@@ -200,8 +200,8 @@
 
     (defrole foreign_registrars
         (vars
-            (hb_nonce1 text) (foreign_venture foreign_unit reg_conf_role name)
-            (hb_nonce2 text) (config cont name)
+            (hb_nonce1 text) (foreign_venture foreign_unit name)
+            (hb_nonce2 text) (cont name)
             (cs_nonce2 ar_ref text)
             (foreign_mib locn) (reg_endpoint_name unit name)
         )
@@ -210,18 +210,18 @@
                 (heartbeat_mpdu
                     foreign_venture
                     foreign_unit
-                    reg_conf_role
-                    reg_conf_role
+                    "0"
+                    "0"
                     hb_nonce1
                     foreign_venture
                 )
             )
             (recv
                 (heartbeat_mpdu
-                    config
-                    config
-                    reg_conf_role
-                    reg_conf_role
+                    "0"
+                    "0"
+                    "0"
+                    "0"
                     hb_nonce2
                     cont
                 )
