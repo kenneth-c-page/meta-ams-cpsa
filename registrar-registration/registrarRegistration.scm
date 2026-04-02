@@ -95,7 +95,8 @@
         (vars
             (ar_nonce text) (reg_endpoint_name venture unit name) (ar_ref text)
             (rn_nonce text) (cont name)
-            (foreign_endpoint_name foreign_unit name) (cs_nonce1 text) (reg_mib locn)
+            (foreign_endpoint_name foreign_unit name) (cs_nonce1 text)
+            (reg_mib locn)
         )
         (trace
             (send 
