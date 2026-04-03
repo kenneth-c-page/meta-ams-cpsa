@@ -100,16 +100,68 @@
         )
         (trace
             (send 
-                (announce_registrar_mpdu)
+                (cat
+                    ; header
+                    (mpdu_header
+                        venture
+                        unit
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        ar_nonce
+                        (enc
+                            ar_nonce
+                            "known_string"
+                            (privk venture)
+                        )
+                    )
+                    ; supplementary data
+                    reg_endpoint_name
+                )
             )
             (recv 
-                (registrar_noted_mpdu)
+                (cat
+                    ; header
+                    (mpdu_header
+                        "0"
+                        "0"
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        rn_nonce
+                        (enc
+                            rn_nonce
+                            "known_string"
+                            (privk cont)
+                        )
+                    )
+                    ; supplementary data
+                )
             )
-            (recv 
-                (cell_spec_mpdu 
-                    ar_ref 
+            (recv
+                (cat
+                    ; header
+                    (mpdu_header
+                        "0"
+                        "0"
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        cs_nonce1
+                        (enc
+                            cs_nonce1
+                            "known_string"
+                            (privk cont)
+                        )
+                    )
+                    ; supplementary data
                     (cell_spec_payload foreign_unit foreign_endpoint_name)
-                    cs_nonce1
                 )
             )
             (stor
@@ -129,23 +181,75 @@
         )
         (trace
             (recv 
-                (announce_registrar_mpdu)
+                (cat
+                    ; header
+                    (mpdu_header
+                        venture
+                        unit
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        ar_nonce
+                        (enc
+                            ar_nonce
+                            "known_string"
+                            (privk venture)
+                        )
+                    )
+                    ; supplementary data
+                    reg_endpoint_name
+                )
             )
             (stor 
                 conf_mib
                 (cell_spec_payload unit reg_endpoint_name)
             )
             (send 
-                (registrar_noted_mpdu)
+                (cat
+                    ; header
+                    (mpdu_header
+                        "0"
+                        "0"
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        rn_nonce
+                        (enc
+                            rn_nonce
+                            "known_string"
+                            (privk cont)
+                        )
+                    )
+                    ; supplementary data
+                )
             )
             (load conf_mib 
                 (cell_spec_payload foreign_unit foreign_endpoint_name)
             )
-            (send 
-                (cell_spec_mpdu 
-                    ar_ref 
+            (send
+                (cat
+                    ; header
+                    (mpdu_header
+                        "0"
+                        "0"
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        cs_nonce1
+                        (enc
+                            cs_nonce1
+                            "known_string"
+                            (privk cont)
+                        )
+                    )
+                    ; supplementary data
                     (cell_spec_payload foreign_unit foreign_endpoint_name)
-                    cs_nonce1
                 )
             )
         )
@@ -166,33 +270,70 @@
                 (cell_spec_payload foreign_unit foreign_endpoint_name)
             )
             (recv
-                (heartbeat_mpdu
-                    foreign_venture
-                    foreign_unit
-                    "0"
-                    "0"
-                    hb_nonce1
-                    foreign_venture
+                (cat
+                    ; header
+                    (mpdu_header
+                        foreign_venture
+                        foreign_unit
+                        "0"
+                        "0"
+                    )
+                    ; digital signature
+                    (cat
+                        hb_nonce1
+                        (enc
+                            hb_nonce1
+                            "known_string"
+                            (privk foreign_venture)
+                        )
+                    )
+                    ; supplementary data
                 )
             )
             (send
-                (heartbeat_mpdu
-                    "0"
-                    "0"
-                    "0"
-                    "0" ; the reference number for a non-module entity is 0, the same as the role number
-                    hb_nonce2
-                    cont
+                (cat
+                    ; header
+                    (mpdu_header
+                        "0"
+                        "0"
+                        "0"
+                        "0" ; the reference number for a non-module entity is 0, the same as the role number
+                    )
+                    ; digital signature
+                    (cat
+                        hb_nonce2
+                        (enc
+                            hb_nonce2
+                            "known_string"
+                            (privk cont)
+                        )
+                    )
+                    ; supplementary data
                 )
             )
             (load conf_mib
                 (cell_spec_payload unit reg_endpoint_name)
             )
             (send
-                (cell_spec_mpdu
-                    ar_ref
+                (cat
+                    ; header
+                    (mpdu_header
+                        "0"
+                        "0"
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        cs_nonce2
+                        (enc
+                            cs_nonce2
+                            "known_string"
+                            (privk cont)
+                        )
+                    )
+                    ; supplementary data
                     (cell_spec_payload unit reg_endpoint_name)
-                    cs_nonce2
                 )
             )
         )
@@ -208,34 +349,177 @@
         )
         (trace
             (send
-                (heartbeat_mpdu
-                    foreign_venture
-                    foreign_unit
-                    "0"
-                    "0"
-                    hb_nonce1
-                    foreign_venture
+                (cat
+                    ; header
+                    (mpdu_header
+                        foreign_venture
+                        foreign_unit
+                        "0"
+                        "0"
+                    )
+                    ; digital signature
+                    (cat
+                        hb_nonce1
+                        (enc
+                            hb_nonce1
+                            "known_string"
+                            (privk foreign_venture)
+                        )
+                    )
+                    ; supplementary data
                 )
             )
             (recv
-                (heartbeat_mpdu
-                    "0"
-                    "0"
-                    "0"
-                    "0"
-                    hb_nonce2
-                    cont
+                (cat
+                    ; header
+                    (mpdu_header
+                        "0"
+                        "0"
+                        "0"
+                        "0"
+                    )
+                    ; digital signature
+                    (cat
+                        hb_nonce2
+                        (enc
+                            hb_nonce2
+                            "known_string"
+                            (privk cont)
+                        )
+                    )
+                    ; supplementary data
                 )
             )
             (recv
-                (cell_spec_mpdu
-                    ar_ref
+                (cat
+                    ; header
+                    (mpdu_header
+                        "0"
+                        "0"
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        cs_nonce2
+                        (enc
+                            cs_nonce2
+                            "known_string"
+                            (privk cont)
+                        )
+                    )
+                    ; supplementary data
                     (cell_spec_payload unit reg_endpoint_name)
-                    cs_nonce2
                 )
             )
             (stor foreign_mib
                 (cell_spec_payload unit reg_endpoint_name)
+            )
+        )
+    )
+
+    (defrole registrar_rejected
+        (vars
+            (ar_nonce_r text) (reg_endpoint_name venture unit name) (ar_ref text)
+            (rr_nonce text) (cont name)
+        )
+        (trace
+            (send 
+                (cat
+                    ; header
+                    (mpdu_header
+                        venture
+                        unit
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        ar_nonce_r
+                        (enc
+                            ar_nonce_r
+                            "known_string"
+                            (privk venture)
+                        )
+                    )
+                    ; supplementary data
+                    reg_endpoint_name
+                )
+            )
+            (recv 
+                (cat
+                    ; header
+                    (mpdu_header
+                        "0"
+                        "0"
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        rr_nonce
+                        (enc
+                            rr_nonce
+                            "known_string"
+                            (privk cont)
+                        )
+                    )
+                    ; supplementary data
+                    "refusal reason"
+                )
+            )
+        )
+    )
+
+    (defrole config_server_reject
+        (vars
+            (ar_nonce_r text) (reg_endpoint_name venture unit name) (ar_ref text)
+            (rr_nonce text) (cont name)
+        )
+        (trace
+            (recv 
+                (cat
+                    ; header
+                    (mpdu_header
+                        venture
+                        unit
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        ar_nonce_r
+                        (enc
+                            ar_nonce_r
+                            "known_string"
+                            (privk venture)
+                        )
+                    )
+                    ; supplementary data
+                    reg_endpoint_name
+                )
+            )
+            (send 
+                (cat
+                    ; header
+                    (mpdu_header
+                        "0"
+                        "0"
+                        "0"
+                        ar_ref
+                    )
+                    ; digital signature
+                    (cat
+                        rr_nonce
+                        (enc
+                            rr_nonce
+                            "known_string"
+                            (privk cont)
+                        )
+                    )
+                    ; supplementary data
+                    "refusal reason"
+                )
             )
         )
     )
@@ -294,5 +578,27 @@
     )
     (uniq-orig hb_nonce1)
     (non-orig (privk foreign_venture))
+    (non-orig (privk cont))
+)
+(defskeleton mams_registrar_reg
+    (vars
+        (ar_nonce_r text) (venture cont name)
+    )
+    (defstrand registrar_rejected 2 
+        (ar_nonce_r ar_nonce_r) (venture venture) (cont cont)
+    )
+    (uniq-orig ar_nonce_r)
+    (non-orig (privk venture))
+    (non-orig (privk cont))
+)
+(defskeleton mams_registrar_reg
+    (vars
+        (rr_nonce text) (venture cont name)
+    )
+    (defstrand config_server_reject 2
+        (rr_nonce rr_nonce) (venture venture) (cont cont)
+    )
+    (uniq-orig rr_nonce)
+    (non-orig (privk venture))
     (non-orig (privk cont))
 )
