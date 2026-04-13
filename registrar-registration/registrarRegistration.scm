@@ -1,423 +1,230 @@
 (herald "Meta-AMS (MAMS) Registrar Registration")
 
-(defmacro (announce_registrar_mpdu)
-    (cat
-        ; header
-        (mpdu_header
-            venture
-            unit
-            "0"
-            ar_ref
-        )
-        ; digital signature
-        (cat
-            ar_nonce
-            (enc
-                ar_nonce
-                "known_string"
-                (privk venture)
-            )
-        )
-        ; supplementary data
-        reg_endpoint_name
-    )
-)
-
-(defmacro (registrar_noted_mpdu)
-    (cat
-        ; header
-        (mpdu_header
-            "0"
-            "0"
-            "0"
-            ar_ref
-        )
-        ; digital signature
-        (cat
-            rn_nonce
-            (enc
-                rn_nonce
-                "known_string"
-                (privk cont)
-            )
-        )
-        ; supplementary data
-    )
-)
-
-(defmacro (cell_spec_mpdu echo payload_tuple nonce)
-    (cat
-        ; header
-        (mpdu_header
-            "0"
-            "0"
-            "0"
-            echo
-        )
-        ; digital signature
-        (cat
-            nonce
-            (enc
-                nonce
-                "known_string"
-                (privk cont)
-            )
-        )
-        ; supplementary data
-        payload_tuple
-    )
-)
-
-(defmacro (heartbeat_mpdu venture unit role ref_heartbeat_source n key_name)
-    (cat
-        ; header
-        (mpdu_header
-            venture
-            unit
-            role
-            ref_heartbeat_source
-        )
-        ; digital signature
-        (cat
-            n
-            (enc
-                n
-                "known_string"
-                (privk key_name)
-            )
-        )
-        ; supplementary data
-    )
-)
-
 (defprotocol mams_registrar_reg basic
     (defrole new_registrar
         (vars
-            (ar_nonce text) (reg_endpoint_name venture unit name) (ar_ref text)
-            (rn_nonce text) (cont name)
-            (foreign_endpoint_name foreign_unit name) (cs_nonce1 text)
-            (reg_mib locn)
+            (foreign_unit ar_nonce rn_nonce cs_nonce1 text) (unit venture cont name) (reg_mib locn)
         )
         (trace
             (send 
                 (cat
-                    ; header
-                    (mpdu_header
-                        venture
-                        unit
-                        "0"
-                        ar_ref
-                    )
-                    ; digital signature
-                    (cat
+                    unit
+                    "announce_registrar"
+                    ar_nonce
+                    (enc
+                        "announce_registrar"
                         ar_nonce
-                        (enc
-                            ar_nonce
-                            "known_string"
-                            (privk venture)
-                        )
+                        (privk venture)
                     )
-                    ; supplementary data
-                    reg_endpoint_name
-                )
-            )
-            (recv 
-                (cat
-                    ; header
-                    (mpdu_header
-                        "0"
-                        "0"
-                        "0"
-                        ar_ref
-                    )
-                    ; digital signature
-                    (cat
-                        rn_nonce
-                        (enc
-                            rn_nonce
-                            "known_string"
-                            (privk cont)
-                        )
-                    )
-                    ; supplementary data
                 )
             )
             (recv
                 (cat
-                    ; header
-                    (mpdu_header
-                        "0"
-                        "0"
-                        "0"
-                        ar_ref
+                    "0"
+                    "registrar_noted"
+                    rn_nonce
+                    (enc
+                        "registrar_noted"
+                        rn_nonce
+                        (prvik cont)
                     )
-                    ; digital signature
-                    (cat
+                )
+            )
+            (recv
+                (cat
+                    "0"
+                    "cell_spec1"
+                    cs_nonce1
+                    (enc
+                        "cell_spec1"
                         cs_nonce1
-                        (enc
-                            cs_nonce1
-                            "known_string"
-                            (privk cont)
-                        )
+                        (privk cont)
                     )
-                    ; supplementary data
-                    (cell_spec_payload foreign_unit foreign_endpoint_name)
+                    foreign_unit
                 )
             )
             (stor
                 reg_mib
-                (cell_spec_payload foreign_unit foreign_endpoint_name)
+                (cat "cell_spec1" foreign_unit)
             )
         )
     )
 
     (defrole config_server_accept
         (vars
-            (ar_nonce text) (reg_endpoint_name venture unit name) (ar_ref text)
-            (conf_mib locn)
-            (rn_nonce text) (cont name)
-            (foreign_endpoint_name foreign_unit name)
-            (cs_nonce1 text)
+            (foreign_unit ar_nonce rn_nonce cs_nonce1 text) (unit venture cont name) (conf_mib locn)
         )
         (trace
             (recv 
                 (cat
-                    ; header
-                    (mpdu_header
-                        venture
-                        unit
-                        "0"
-                        ar_ref
-                    )
-                    ; digital signature
-                    (cat
+                    unit
+                    "announce_registrar"
+                    ar_nonce
+                    (enc
+                        "announce_registrar"
                         ar_nonce
-                        (enc
-                            ar_nonce
-                            "known_string"
-                            (privk venture)
-                        )
+                        (privk venture)
                     )
-                    ; supplementary data
-                    reg_endpoint_name
                 )
             )
-            (stor 
+            (stor
                 conf_mib
-                (cell_spec_payload unit reg_endpoint_name)
-            )
-            (send 
-                (cat
-                    ; header
-                    (mpdu_header
-                        "0"
-                        "0"
-                        "0"
-                        ar_ref
-                    )
-                    ; digital signature
-                    (cat
-                        rn_nonce
-                        (enc
-                            rn_nonce
-                            "known_string"
-                            (privk cont)
-                        )
-                    )
-                    ; supplementary data
-                )
-            )
-            (load conf_mib 
-                (cell_spec_payload foreign_unit foreign_endpoint_name)
+                (cat "announce_registrar" unit)
             )
             (send
                 (cat
-                    ; header
-                    (mpdu_header
-                        "0"
-                        "0"
-                        "0"
-                        ar_ref
+                    "0"
+                    "registrar_noted"
+                    rn_nonce
+                    (enc
+                        "registrar_noted"
+                        rn_nonce
+                        (prvik cont)
                     )
-                    ; digital signature
-                    (cat
-                        cs_nonce1
-                        (enc
-                            cs_nonce1
-                            "known_string"
-                            (privk cont)
-                        )
-                    )
-                    ; supplementary data
-                    (cell_spec_payload foreign_unit foreign_endpoint_name)
                 )
             )
+            (load
+                conf_mib
+                (cat
+                    (cat "foreign_heartbeat" foreign_unit)
+                )
+            )
+            (send
+                (cat
+                    "0"
+                    "cell_spec1"
+                    cs_nonce1
+                    (enc
+                        "cell_spec1"
+                        cs_nonce1
+                        (privk cont)
+                    )
+                    foreign_unit
+                )
+            )
+            (gen-st
+                (cat "foreign_cell_spec" foreign_unit)
+            )
         )
-        (gen-st (cell_spec_payload foreign_unit foreign_endpoint_name))
     )
 
-    (defrole config_server_forward
+    (defrole config_server_prereg
         (vars
-            (conf_mib locn) (foreign_unit foreign_endpoint_name name)
-            (hb_nonce1 text) (foreign_venture name)
-            (hb_nonce2 text) (cont name)
-            (unit reg_endpoint_name name)
-            (cs_nonce2 ar_ref text)
+            (hb_nonce1 hb_nonce2 text) (foreign_unit venture cont name) (conf_mib locn)
         )
         (trace
             (stor ; this information is either preloaded, sent, etc., up to implementation
                 conf_mib
-                (cell_spec_payload foreign_unit foreign_endpoint_name)
+                (cat "foreign_cell_spec" foreign_unit)
             )
             (recv
                 (cat
-                    ; header
-                    (mpdu_header
-                        foreign_venture
-                        foreign_unit
-                        "0"
-                        "0"
-                    )
-                    ; digital signature
-                    (cat
+                    foreign_unit
+                    "foreign_hearbeat"
+                    hb_nonce1
+                    (enc
+                        "foreign_heartbeat"
                         hb_nonce1
-                        (enc
-                            hb_nonce1
-                            "known_string"
-                            (privk foreign_venture)
-                        )
+                        (privk venture)
                     )
-                    ; supplementary data
                 )
             )
             (send
                 (cat
-                    ; header
-                    (mpdu_header
-                        "0"
-                        "0"
-                        "0"
-                        "0" ; the reference number for a non-module entity is 0, the same as the role number
-                    )
-                    ; digital signature
-                    (cat
+                    "0"
+                    "config_heartbeat"
+                    hb_nonce2
+                    (enc
+                        "config_heartbeat"
                         hb_nonce2
-                        (enc
-                            hb_nonce2
-                            "known_string"
-                            (privk cont)
-                        )
+                        (privk cont)
                     )
-                    ; supplementary data
-                )
-            )
-            (load conf_mib
-                (cell_spec_payload unit reg_endpoint_name)
-            )
-            (send
-                (cat
-                    ; header
-                    (mpdu_header
-                        "0"
-                        "0"
-                        "0"
-                        ar_ref
-                    )
-                    ; digital signature
-                    (cat
-                        cs_nonce2
-                        (enc
-                            cs_nonce2
-                            "known_string"
-                            (privk cont)
-                        )
-                    )
-                    ; supplementary data
-                    (cell_spec_payload unit reg_endpoint_name)
                 )
             )
         )
-        (gen-st (cell_spec_payload unit reg_endpoint_name))
     )
 
-    (defrole foreign_registrars
+    (defrole foreign_registrars_hearbeat
         (vars
-            (hb_nonce1 text) (foreign_venture foreign_unit name)
-            (hb_nonce2 text) (cont name)
-            (cs_nonce2 ar_ref text)
-            (foreign_mib locn) (reg_endpoint_name unit name)
+            (hb_nonce1 hb_nonce2 text) (foreign_unit venture cont name) (conf_mib locn)
         )
         (trace
             (send
                 (cat
-                    ; header
-                    (mpdu_header
-                        foreign_venture
-                        foreign_unit
-                        "0"
-                        "0"
-                    )
-                    ; digital signature
-                    (cat
+                    foreign_unit
+                    "foreign_hearbeat"
+                    hb_nonce1
+                    (enc
+                        "foreign_heartbeat"
                         hb_nonce1
-                        (enc
-                            hb_nonce1
-                            "known_string"
-                            (privk foreign_venture)
-                        )
+                        (privk venture)
                     )
-                    ; supplementary data
                 )
             )
             (recv
                 (cat
-                    ; header
-                    (mpdu_header
-                        "0"
-                        "0"
-                        "0"
-                        "0"
-                    )
-                    ; digital signature
-                    (cat
+                    "0"
+                    "config_heartbeat"
+                    hb_nonce2
+                    (enc
+                        "config_heartbeat"
                         hb_nonce2
-                        (enc
-                            hb_nonce2
-                            "known_string"
-                            (privk cont)
-                        )
+                        (privk cont)
                     )
-                    ; supplementary data
                 )
-            )
-            (recv
-                (cat
-                    ; header
-                    (mpdu_header
-                        "0"
-                        "0"
-                        "0"
-                        ar_ref
-                    )
-                    ; digital signature
-                    (cat
-                        cs_nonce2
-                        (enc
-                            cs_nonce2
-                            "known_string"
-                            (privk cont)
-                        )
-                    )
-                    ; supplementary data
-                    (cell_spec_payload unit reg_endpoint_name)
-                )
-            )
-            (stor foreign_mib
-                (cell_spec_payload unit reg_endpoint_name)
             )
         )
     )
 
+    (defrole config_server_forward
+        (vars
+            (cs_nonce2 text) (unit cont name) (conf_mib locn)
+        )
+        (trace
+            (load
+                conf_mib
+                (cat "announce_registrar" unit)
+            )
+            (send
+                (cat
+                    "0"
+                    "cell_spec2"
+                    cs_nonce2
+                    (enc
+                        "cell_spec2"
+                        cs_nonce2
+                        (privk cont)
+                    )
+                    unit
+                )
+            )
+        )
+        (gen-st
+            (cat "announce_registrar" unit)
+        )
+    )
+    
+    (defrole foreign_registrars_postreg
+        (vars
+            (cs_nonce2 text) (unit cont name)
+        )
+        (trace
+            (recv
+                (cat
+                    "0"
+                    "cell_spec2"
+                    cs_nonce2
+                    (enc
+                        "cell_spec2"
+                        cs_nonce2
+                        (privk cont)
+                    )
+                    unit
+                )
+            )
+        )
+    )
+    
     (defrole registrar_rejected
         (vars
             (ar_nonce_r text) (reg_endpoint_name venture unit name) (ar_ref text)
@@ -522,15 +329,6 @@
                 )
             )
         )
-    )
-
-    (lang
-        (mpdu_header (tuple 4))
-        ; venture number (name)
-        ; unit number (name)
-        ; role number (name)
-        ; reference number (per strand)
-        (cell_spec_payload (tuple 2))
     )
 )
 
