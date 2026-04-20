@@ -365,7 +365,7 @@
                     )
                 )
             )
-            (send
+            (recv
                 (cat
                     foreign_unit
                     foreign_role_number
@@ -536,7 +536,6 @@
             (stor reg_mib
                 (cat "reg_mem" mod_num)
             )
-
         )
     )
 
@@ -544,6 +543,7 @@
         (vars
             (unit role_number venture pre_role_number name) (ias_nonce mod_num pre_mod_num iah_nonce text) (pre_mod_mib locn)
             (rr_role_number name) (ias_nonce1 iah_nonce1 mod_num1 text)
+            (mhs_nonce alt_mod_num text)
         )
         (trace
             (recv
@@ -611,6 +611,23 @@
                         (privk pre_role_number)
                     )
                 )
+            )
+
+            (send
+                (cat
+                    unit
+                    "module_has_started"
+                    mhs_nonce
+                    alt_mod_num
+                    (enc
+                        "module_has_started"
+                        mhs_nonce
+                        (privk venture)
+                    )
+                )
+            )
+            (stor pre_mod_mib
+                (cat "mod_mem" unit alt_mod_num)
             )
         )
         (gen-st
@@ -917,16 +934,192 @@
 
     ; Registrar sends I_am_here with module_has_started, instead of I_am_starting"
     (defrole config_server_alt
+        (vars
+            (unit alt_role_number cont name) (req_nonce3 cs_nonce5 text) (conf_mib locn)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    alt_role_number
+                    "registrar_query3"
+                    rq_nonce3
+                    (enc
+                        "registrar_query3"
+                        rq_nonce3
+                        (privk alt_role_number)
+                    )
+                )
+            )
+            (load conf_mib
+                (cat "conf_mem" unit)
+            )
+            (send
+                (cat
+                    "0"
+                    "cell_spec5"
+                    cs_nonce5
+                    (enc
+                        "cell_spec5"
+                        cs_nonce5
+                        (privk cont)
+                    )
+                    unit
+                )
+            )
+        )
+        (gen-st
+            (cat "conf_mem" unit)
+        )
     )
 
     (defrole mod_reg_alt
+        (vars
+            (unit alt_role_number cont venture name) (rq_nonce3 cs_nonce5 mr_nonce3 yai_nonce2 alt_mod_num iah_nonce3 text) (module_mib2 locn)
+        )
+        (trace
+            (send
+                (cat
+                    unit
+                    alt_role_number
+                    "registrar_query3"
+                    rq_nonce3
+                    (enc
+                        "registrar_query3"
+                        rq_nonce3
+                        (privk alt_role_number)
+                    )
+                )
+            )
+            (recv
+                (cat
+                    "0"
+                    "cell_spec5"
+                    cs_nonce5
+                    (enc
+                        "cell_spec5"
+                        cs_nonce5
+                        (privk cont)
+                    )
+                    unit
+                )
+            )
+            (stor module_mib2
+                (cat "mod_mem" unit)
+            )
+            (send
+                (cat
+                    unit
+                    alt_role_number
+                    "module_registration3"
+                    mr_nonce3
+                    (enc
+                        "module_registration3"
+                        mr_nonce3
+                        (privk alt_role_number)
+                    )
+                )
+            )
+            (recv
+                (cat
+                    unit
+                    "you_are_in2"
+                    yai_nonce2
+                    alt_mod_num
+                    (enc
+                        "you_are_in2"
+                        yai_nonce2
+                        (privk venture)
+                    )
+                )
+            )
+            (stor module_mib2
+                (cat "mod_mem" alt_mod_num)
+            )
+            (recv
+                (cat
+                    unit
+                    "i_am_here3"
+                    iah_nonce3
+                    pre_mod_num
+                    (enc
+                        "i_am_here3"
+                        iah_nonce3
+                        (privk venture)
+                    )
+                )
+            )
+        )
     )
 
     (defrole reg_mod_reg_alt
+        (vars
+            (unit alt_role_number venture name) (mr_nonce3 yai_nonce2 alt_mod_num pre_mod_num iah_nonce3 mhs_nonce text) (reg_mib locn)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    alt_role_number
+                    "module_registration3"
+                    mr_nonce3
+                    (enc
+                        "module_registration3"
+                        mr_nonce3
+                        (privk alt_role_number)
+                    )
+                )
+            )
+            (send
+                (cat
+                    unit
+                    "you_are_in2"
+                    yai_nonce2
+                    alt_mod_num
+                    (enc
+                        "you_are_in2"
+                        yai_nonce2
+                        (privk venture)
+                    )
+                )
+            )
+            (load reg_mib
+                (cat "reg_mem" pre_mod_num)
+            )
+            (send
+                (cat
+                    unit
+                    "i_am_here3"
+                    iah_nonce3
+                    pre_mod_num
+                    (enc
+                        "i_am_here3"
+                        iah_nonce3
+                        (privk venture)
+                    )
+                )
+            )
+            (stor reg_mib
+                (cat "reg_mem" alt_mod_num)
+            )
+            (send
+                (cat
+                    unit
+                    "module_has_started"
+                    mhs_nonce
+                    alt_mod_num
+                    (enc
+                        "module_has_started"
+                        mhs_nonce
+                        (privk venture)
+                    )
+                )
+            )
+        )
+        (gen-st
+            (cat "reg_mem" pre_mod_num)
+        )
     )
-
-    registrar module_has_started forward, I_am_here
-    forward_module_has_started
 
     ;;; Unregistration ;;;
 
