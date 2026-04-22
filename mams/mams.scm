@@ -365,6 +365,9 @@
                     )
                 )
             )
+            (stor module_mib
+                (cat "mod_mem" unit pre_role_number pre_mod_num)
+            )
             (recv
                 (cat
                     foreign_unit
@@ -378,6 +381,9 @@
                         (privk foreign_role_number)
                     )
                 )
+            )
+            (stor module_mib
+                (cat "mod_mem" foreign_unit foreign_role_number foreign_mod_num)
             )
         )
     )
@@ -613,7 +619,7 @@
                 )
             )
 
-            (send
+            (recv
                 (cat
                     unit
                     "module_has_started"
@@ -656,7 +662,7 @@
             )
             (send
                 (cat
-                    foreign_unit
+                    unit
                     role_number
                     "i_am_starting"
                     ias_nonce
@@ -664,7 +670,7 @@
                     (enc
                         "i_am_starting"
                         ias_nonce
-                        (privk foreign_venture)
+                        (privk venture)
                     )
                 )
             )
@@ -678,7 +684,7 @@
         (trace
             (recv
                 (cat
-                    foreign_unit
+                    unit
                     role_number
                     "i_am_starting"
                     ias_nonce
@@ -686,7 +692,7 @@
                     (enc
                         "i_am_starting"
                         ias_nonce
-                        (privk foreign_venture)
+                        (privk venture)
                     )
                 )
             )
@@ -1121,17 +1127,463 @@
         )
     )
 
-    ;;; Unregistration ;;;
+    (defrole foreign_reg_mod_reg_alt
+        (vars
+            (unit venture name) (mhs_nonce alt_mod_num text)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    "module_has_started"
+                    mhs_nonce
+                    alt_mod_num
+                    (enc
+                        "module_has_started"
+                        mhs_nonce
+                        (privk venture)
+                    )
+                )
+            )
+            (send
+                (cat
+                    unit
+                    "module_has_started"
+                    mhs_nonce
+                    alt_mod_num
+                    (enc
+                        "module_has_started"
+                        mhs_nonce
+                        (privk venture)
+                    )
+                )
+            )
+        )
+    )
+
+    (defrole foreign_mod_alt
+        (vars
+            (unit venture name) (mhs_nonce alt_mod_num text)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    "module_has_started"
+                    mhs_nonce
+                    alt_mod_num
+                    (enc
+                        "module_has_started"
+                        mhs_nonce
+                        (privk venture)
+                    )
+                )
+            )
+        )
+    )
 
     ;;; Reconnection ;;;
+    (defrole config_server_reconn
+        (vars
+            (unit reconn_role_number cont name) (rq_nonce4 cs_nonce6 text) (conf_mib locn)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    reconn_role_number
+                    "registrar_query4"
+                    rq_nonce4
+                    (enc
+                        "registrar_query4"
+                        rq_nonce4
+                        (privk reconn_role_number)
+                    )
+                )
+            )
+            (load conf_mib
+                (cat "conf_mem" unit)
+            )
+            (send
+                (cat
+                    "0"
+                    "cell_spec6"
+                    cs_nonce6
+                    (enc
+                        "cell_spec6"
+                        cs_nonce6
+                        (privk cont)
+                    )
+                    unit
+                )
+            )
+        )
+        (gen-st
+            (cat "conf_mem" unit)
+        )
+    )
+    
+    (defrole module_reconn
+        (vars
+            (unit reconn_role_number cont name) (ryad_nonce rc_nonce rq_nonce4 cs_nonce6 text) (mod_mib locn)
+        )
+        (trace
+            (send
+                (cat
+                    unit
+                    reconn_role_number
+                    "registrar_query4"
+                    rq_nonce4
+                    (enc
+                        "registrar_query4"
+                        rq_nonce4
+                        (privk reconn_role_number)
+                    )
+                )
+            )
+            (recv
+                (cat
+                    "0"
+                    "cell_spec6"
+                    cs_nonce6
+                    (enc
+                        "cell_spec6"
+                        cs_nonce6
+                        (privk cont)
+                    )
+                    unit
+                )
+            )
+            (load module_mib
+                (cat "mod_mem" unit pre_role_number pre_mod_num)
+            )
+            (send
+                (cat
+                    unit
+                    reconn_role_number
+                    "reconnect"
+                    rc_nonce
+                    (enc
+                        "reconnect"
+                        rc_nonce
+                        (privk reconn_role_number)
+                    )
+                    pre_role_number
+                    pre_mod_num
+                )
+            )
+            (recv
+                (cat
+                    unit
+                    "reconnected/you_are_dead"
+                    ryad_nonce
+                    (enc
+                        "reconnected/you_are_dead"
+                        ryad_nonce
+                        (privk venture)
+                    )
+                )
+            )
+            ; At which point, unregistration is followed if you_are_dead is sent
+        )
+        (gen-st
+            (cat "mod_mem" unit pre_role_number pre_mod_num)
+        )
+    )
+
+    (defrole registrar_reconnect
+        (vars
+            (unit reconn_role_number pre_role_number name) (rc_nonce pre_mod_num ryad_nonce text)
+        )
+        (trace
+            (send
+                (cat
+                    unit
+                    reconn_role_number
+                    "reconnect"
+                    rc_nonce
+                    (enc
+                        "reconnect"
+                        rc_nonce
+                        (privk reconn_role_number)
+                    )
+                    pre_role_number
+                    pre_mod_num
+                )
+            )
+            (send
+                (cat
+                    unit
+                    "reconnected/you_are_dead"
+                    ryad_nonce
+                    (enc
+                        "reconnected/you_are_dead"
+                        ryad_nonce
+                        (privk venture)
+                    )
+                )
+            )
+        )
+    )
 
     ;;; Resynchronization ;;;
+    (defrole registrar_resync
+        (vars
+            (mod_num1 mod_num2 cstat_nonce text) (foreign_unit unit venture name)
+        )
+        (trace
+            (load reg_mib
+                (cat "reg_mem" mod_num1)
+            )
+            (load reg_mib
+                (cat "reg_mem" mod_num2)
+            )
+            (load
+                (cat "reg_mem" foreign_unit)
+            )
+            (send
+                (cat
+                    unit
+                    "cell_status"
+                    cstat_nonce
+                    (enc
+                        "cell_status"
+                        cstat_nonce
+                        (privk venture)
+                    )
+                )
+            )
+        )
+        (gen-st (cat "reg_mem" mod_num1))
+        (gen-st (cat "reg_mem" mod_num2))
+        (gen-st (cat "reg_mem" foreign_unit))
+    )
 
-    ;;; Invitation Assertion ;;;
+    (defrole mod1_resync
+        (vars
+            (unit venture name) (cstat_nonce text)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    "cell_status"
+                    cstat_nonce
+                    (enc
+                        "cell_status"
+                        cstat_nonce
+                        (privk venture)
+                    )
+                )
+            )
+        )
+    )
 
-    ;;; Invitation Cancellation ;;;
+    (defrole mod2_resync
+        (vars
+            (unit venture name) (cstat_nonce text)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    "cell_status"
+                    cstat_nonce
+                    (enc
+                        "cell_status"
+                        cstat_nonce
+                        (privk venture)
+                    )
+                )
+            )
+        )
+    )
 
-    ;;; Subscription Assertion ;;;
+    (defrole foreign_reg_resync
+        (vars
+            (unit venture name) (cstat_nonce text)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    "cell_status"
+                    cstat_nonce
+                    (enc
+                        "cell_status"
+                        cstat_nonce
+                        (privk venture)
+                    )
+                )
+            )
+            (send
+                (cat
+                    unit
+                    "cell_status"
+                    cstat_nonce
+                    (enc
+                        "cell_status"
+                        cstat_nonce
+                        (privk venture)
+                    )
+                )
+            )
+        )
+    )
 
-    ;;; Subscription Cancellation ;;;
+    (defrole foreign_mod_resync
+        (vars
+            (unit venture name) (cstat_nonce text)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    "cell_status"
+                    cstat_nonce
+                    (enc
+                        "cell_status"
+                        cstat_nonce
+                        (privk venture)
+                    )
+                )
+            )
+        )
+    )
+
+    ;;; Subscription/Invitation Assertion/Cancellation/Unregistration ;;;
+    (defrole mod_subscribe
+        (vars
+            (module_mib locn) (unit role_number name) (s_nonce text)
+        )
+        (trace
+            (load module_mib
+                (cat "mod_mem" unit)
+            )
+            (send
+                (cat
+                    unit
+                    role_number
+                    "ungregister/subscribe/unsubscribe/invite/disinvite"
+                    s_nonce
+                    (enc
+                        "ungregister/subscribe/unsubscribe/invite/disinvite"
+                        s_nonce
+                        (privk role_number)
+                    )
+                )
+            )
+        )
+        (gen-st (cat "mod_mem" unit))
+    )
+
+    (defrole reg_mod_sub
+        (vars
+            (unit role_number name) (s_nonce text)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    role_number
+                    "ungregister/subscribe/unsubscribe/invite/disinvite"
+                    s_nonce
+                    (enc
+                        "ungregister/subscribe/unsubscribe/invite/disinvite"
+                        s_nonce
+                        (privk role_number)
+                    )
+                )
+            )
+            (send
+                (cat
+                    unit
+                    role_number
+                    "ungregister/subscribe/unsubscribe/invite/disinvite"
+                    s_nonce
+                    (enc
+                        "ungregister/subscribe/unsubscribe/invite/disinvite"
+                        s_nonce
+                        (privk role_number)
+                    )
+                )
+            )
+        )
+    )
+
+    (defrole pre_mod_sub
+        (vars
+            (unit role_number name) (s_nonce text)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    role_number
+                    "ungregister/subscribe/unsubscribe/invite/disinvite"
+                    s_nonce
+                    (enc
+                        "ungregister/subscribe/unsubscribe/invite/disinvite"
+                        s_nonce
+                        (privk role_number)
+                    )
+                )
+            )
+        )
+    )
+
+    (defrole foreign_reg_mod_sub
+        (vars
+            (unit role_number name) (s_nonce text)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    role_number
+                    "ungregister/subscribe/unsubscribe/invite/disinvite"
+                    s_nonce
+                    (enc
+                        "ungregister/subscribe/unsubscribe/invite/disinvite"
+                        s_nonce
+                        (privk role_number)
+                    )
+                )
+            )
+            (send
+                (cat
+                    unit
+                    role_number
+                    "ungregister/subscribe/unsubscribe/invite/disinvite"
+                    s_nonce
+                    (enc
+                        "ungregister/subscribe/unsubscribe/invite/disinvite"
+                        s_nonce
+                        (privk role_number)
+                    )
+                )
+            )
+        )
+    )
+
+    (defrole foreign_mod_sub
+        (vars
+            (unit role_number name) (s_nonce text)
+        )
+        (trace
+            (recv
+                (cat
+                    unit
+                    role_number
+                    "ungregister/subscribe/unsubscribe/invite/disinvite"
+                    s_nonce
+                    (enc
+                        "ungregister/subscribe/unsubscribe/invite/disinvite"
+                        s_nonce
+                        (privk role_number)
+                    )
+                )
+            )
+        )
+    )
 )
